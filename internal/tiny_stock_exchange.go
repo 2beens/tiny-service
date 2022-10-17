@@ -67,6 +67,7 @@ func (s *TinyStockExchange) NewStock(ctx context.Context, stock *tseProto.Stock)
 		{"name", stock.Name},
 	})
 	if err != nil {
+		log.Printf("add new stock %s: %s", stock.Ticker, err)
 		return nil, err
 	}
 
