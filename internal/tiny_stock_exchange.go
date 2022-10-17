@@ -80,8 +80,23 @@ func (s *TinyStockExchange) NewStock(ctx context.Context, stock *tseProto.Stock)
 }
 
 func (s *TinyStockExchange) RemoveStock(ctx context.Context, stock *tseProto.Stock) (*tseProto.Result, error) {
-	//TODO implement me
-	panic("implement me")
+	filter := bson.D{
+		{"ticker", bson.D{{"$eq", stock.Ticker}}},
+	}
+	opts := options.Delete().SetHint(bson.D{{"ticker", 1}})
+
+	result, err := s.collStocks.DeleteOne(ctx, filter, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	msg := fmt.Sprintf("deleted documents (stock: %s): %v", stock.Ticker, result.DeletedCount)
+	fmt.Println(msg)
+
+	return &tseProto.Result{
+		Success: true,
+		Message: msg,
+	}, nil
 }
 
 func (s *TinyStockExchange) UpdateStock(ctx context.Context, stock *tseProto.Stock) (*tseProto.Result, error) {
