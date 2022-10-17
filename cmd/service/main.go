@@ -26,6 +26,7 @@ func main() {
 	host := flag.String("host", "localhost", "tiny stock exchange server host")
 	port := flag.Int("port", 9002, "tiny stock exchange server port")
 	mdbHost := flag.String("mdbhost", "localhost", "mongo db host")
+	tseDBName := flag.String("tsedb", "tiny-stock-exchange", "mongo db tiny stock exchange db name")
 
 	chOsInterrupt := make(chan os.Signal, 1)
 	signal.Notify(chOsInterrupt, os.Interrupt, syscall.SIGTERM, syscall.SIGKILL)
@@ -53,7 +54,11 @@ func main() {
 	log.Println("mongodb client ping ok")
 
 	grpcServer := grpc.NewServer()
-	tinyStockExchange := internal.NewTinyStockExchange(mongoClient)
+	tinyStockExchange, err := internal.NewTinyStockExchange(*tseDBName, mongoClient)
+	if err != nil {
+		log.Fatalf("create tiny stock exchange: %s", err)
+	}
+
 	go func() {
 		tseProto.RegisterTinyStockExchangeServer(grpcServer, tinyStockExchange)
 
