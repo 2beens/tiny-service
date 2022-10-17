@@ -26,11 +26,12 @@ message Stock {
 }
 
 // StockValueDelta represents a change of stock price at the specified timestamp
-// e.g. 153153153123, +0.11
-// e.g. 153153153532, -0.24
+// e.g. AAPL, 153153153123, +0.11
+// e.g. AAPL, 153153153532, -0.24
 message StockValueDelta {
-  int32 timestamp = 1;
-  int32 delta = 2;
+  string ticker = 1;
+  int64 timestamp = 2;
+  int64 delta = 3;
 }
 
 message Result {

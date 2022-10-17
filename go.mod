@@ -3,7 +3,7 @@ module github.com/2beens/tiny-service
 go 1.19
 
 require (
-	github.com/2beens/tiny-stock-exchange-proto v1.0.0
+	github.com/2beens/tiny-stock-exchange-proto v1.1.0
 	go.mongodb.org/mongo-driver v1.10.3
 	google.golang.org/grpc v1.50.1
 )

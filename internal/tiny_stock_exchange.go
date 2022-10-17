@@ -114,6 +114,7 @@ func (s *TinyStockExchange) ListStocks(listStocksRequest *tseProto.ListStocksReq
 func (s *TinyStockExchange) NewValueDelta(ctx context.Context, delta *tseProto.StockValueDelta) (*tseProto.Result, error) {
 	log.Printf("> will try to insert value delta: %v", delta)
 	result, err := s.collValueDeltas.InsertOne(ctx, bson.D{
+		{"ticker", delta.Ticker},
 		{"delta", delta.Delta},
 		{"timestamp", delta.Timestamp},
 	})
