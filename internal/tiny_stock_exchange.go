@@ -2,35 +2,49 @@ package internal
 
 import (
 	"context"
+
+	tseProto "github.com/2beens/tiny-stock-exchange-proto"
 )
 
-type tinyStockExchangeServer struct {
+type TinyStockExchange struct {
+	tseProto.UnimplementedTinyStockExchangeServer
 }
 
-func newTinyStockExchangeServer() *tinyStockExchangeServer {
-
+func NewTinyStockExchange() *TinyStockExchange {
+	return &TinyStockExchange{}
 }
 
-func (s *tinyStockExchangeServer) NewStock(context.Context, *Stock) (*Result, error) {
-
+func (s *TinyStockExchange) NewStock(ctx context.Context, stock *tseProto.Stock) (*tseProto.Result, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
-func (s *tinyStockExchangeServer) RemoveStock(context.Context, *Stock) (*Result, error) {
-
+func (s *TinyStockExchange) RemoveStock(ctx context.Context, stock *tseProto.Stock) (*tseProto.Result, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
-func (s *tinyStockExchangeServer) UpdateStock(context.Context, *Stock) (*Result, error) {
-
+func (s *TinyStockExchange) UpdateStock(ctx context.Context, stock *tseProto.Stock) (*tseProto.Result, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
-func (s *tinyStockExchangeServer) ListStocks(*ListStocksRequest, TinyStockExchange_ListStocksServer) error {
-
+func (s *TinyStockExchange) ListStocks(listStocksRequest *tseProto.ListStocksRequest, listStocksServer tseProto.TinyStockExchange_ListStocksServer) error {
+	//TODO implement me
+	panic("implement me")
 }
 
-func (s *tinyStockExchangeServer) NewValueDelta(context.Context, *StockValueDelta) (*Result, error) {
-
+func (s *TinyStockExchange) NewValueDelta(ctx context.Context, delta *tseProto.StockValueDelta) (*tseProto.Result, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
-func (s *tinyStockExchangeServer) ListStockValueDeltas(*ListStockValueDeltasRequest, TinyStockExchange_ListStockValueDeltasServer) error {
+func (s *TinyStockExchange) ListStockValueDeltas(listStockValueDeltasRequest *tseProto.ListStockValueDeltasRequest, listStockValueDeltasServer tseProto.TinyStockExchange_ListStockValueDeltasServer) error {
+	//TODO implement me
+	panic("implement me")
+}
 
+func (s *TinyStockExchange) mustEmbedUnimplementedTinyStockExchangeServer() {
+	//TODO implement me
+	panic("implement me")
 }
