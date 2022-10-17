@@ -80,6 +80,7 @@ func (s *TinyStockExchange) NewStock(ctx context.Context, stock *tseProto.Stock)
 }
 
 func (s *TinyStockExchange) RemoveStock(ctx context.Context, stock *tseProto.Stock) (*tseProto.Result, error) {
+	log.Printf("> will try to remove stock: %v", stock)
 	filter := bson.D{
 		{"ticker", bson.D{{"$eq", stock.Ticker}}},
 	}
@@ -110,8 +111,22 @@ func (s *TinyStockExchange) ListStocks(listStocksRequest *tseProto.ListStocksReq
 }
 
 func (s *TinyStockExchange) NewValueDelta(ctx context.Context, delta *tseProto.StockValueDelta) (*tseProto.Result, error) {
-	//TODO implement me
-	panic("implement me")
+	log.Printf("> will try to insert value delta: %v", delta)
+	result, err := s.collValueDeltas.InsertOne(ctx, bson.D{
+		{"delta", delta.Delta},
+		{"timestamp", delta.Timestamp},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	msg := fmt.Sprintf("inserted document (value delta) with _id: %v", result.InsertedID)
+	fmt.Println(msg)
+
+	return &tseProto.Result{
+		Success: true,
+		Message: msg,
+	}, nil
 }
 
 func (s *TinyStockExchange) ListStockValueDeltas(listStockValueDeltasRequest *tseProto.ListStockValueDeltasRequest, listStockValueDeltasServer tseProto.TinyStockExchange_ListStockValueDeltasServer) error {
