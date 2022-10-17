@@ -4,14 +4,20 @@ import (
 	"context"
 
 	tseProto "github.com/2beens/tiny-stock-exchange-proto"
+
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type TinyStockExchange struct {
 	tseProto.UnimplementedTinyStockExchangeServer
+
+	mongoClient *mongo.Client
 }
 
-func NewTinyStockExchange() *TinyStockExchange {
-	return &TinyStockExchange{}
+func NewTinyStockExchange(mongoClient *mongo.Client) *TinyStockExchange {
+	return &TinyStockExchange{
+		mongoClient: mongoClient,
+	}
 }
 
 func (s *TinyStockExchange) NewStock(ctx context.Context, stock *tseProto.Stock) (*tseProto.Result, error) {
