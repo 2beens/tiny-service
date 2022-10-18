@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"os/signal"
@@ -14,6 +13,7 @@ import (
 	"github.com/2beens/tiny-service/internal"
 	tseProto "github.com/2beens/tiny-stock-exchange-proto"
 
+	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -72,7 +72,7 @@ func main() {
 	}()
 
 	receivedSig := <-chOsInterrupt
-	log.Printf("signal [%s] received, killing everything ...", receivedSig)
+	log.Warnf("signal [%s] received, killing everything ...", receivedSig)
 	cancel()
 
 	grpcServer.GracefulStop()

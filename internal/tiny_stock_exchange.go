@@ -3,11 +3,11 @@ package internal
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/2beens/tiny-service/pkg"
 	tseProto "github.com/2beens/tiny-stock-exchange-proto"
 
+	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -137,6 +137,35 @@ func (s *TinyStockExchange) NewValueDelta(ctx context.Context, delta *tseProto.S
 }
 
 func (s *TinyStockExchange) ListStockValueDeltas(listStockValueDeltasRequest *tseProto.ListStockValueDeltasRequest, listStockValueDeltasServer tseProto.TinyStockExchange_ListStockValueDeltasServer) error {
-	//TODO implement me
-	panic("implement me")
+	filter := bson.D{}
+	cursor, err := s.collValueDeltas.Find(listStockValueDeltasServer.Context(), filter)
+	if err != nil {
+		return err
+	}
+
+	var results []bson.D
+	if err := cursor.All(listStockValueDeltasServer.Context(), &results); err != nil {
+		return err
+	}
+
+	for _, result := range results {
+		resMap := result.Map()
+		ts, ok := resMap["timestamp"].(int64)
+		if !ok {
+			log.Errorf("list stock deltas: timestamp [%v] not an int64!", resMap["timestamp"])
+			ts = 0 // or maybe skip
+		}
+		delta, ok := resMap[""].(int64)
+		if !ok {
+			log.Errorf("list stock deltas: delta [%v] not an int64!", resMap["delta"])
+			delta = 0 // or maybe skip
+		}
+		listStockValueDeltasServer.Send(&tseProto.StockValueDelta{
+			Ticker:    fmt.Sprintf("%s", resMap["ticker"]),
+			Timestamp: ts,
+			Delta:     delta,
+		})
+	}
+
+	return nil
 }
