@@ -207,7 +207,7 @@ func (s *TinyStockExchange) ListStockValueDeltas(
 			log.Errorf("list stock deltas: timestamp [%v] not an int64!", resMap["timestamp"])
 			ts = 0 // or maybe skip
 		}
-		delta, ok := resMap[""].(int64)
+		delta, ok := resMap["delta"].(int64)
 		if !ok {
 			log.Errorf("list stock deltas: delta [%v] not an int64!", resMap["delta"])
 			delta = 0 // or maybe skip
