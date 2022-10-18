@@ -23,44 +23,40 @@ jobs:
           push: true
           tags: stubin87/tiny-service:${{ github.event.release.tag_name }}
 
-#  k8s-config-update:
-#    runs-on: ubuntu-latest
-#    needs: docker-build-and-push
-#    steps:
-#      - name: get yq
-#        uses: mikefarah/yq@master
-#
-#      - name: k8s configs update
-#        env:
-#          PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-#        run: |
-#          git clone https://2beens:$PERSONAL_ACCESS_TOKEN@github.com/2beens/tiny-api-k8s
-#
-#          cd tiny-api-k8s
-#          git config user.name "Serj Tubin (github actions bot)"
-#          git config user.email "stubin87@gmail.com"
-#
-#          # make the change
-#          echo "updating kubernetes-tiny-api/deployment.yaml to use: stubin87/tiny-api:${{ github.event.release.tag_name }}"
-#          # sed -i -e 's#.*image: stubin87/tiny-api:.*#        image: stubin87/tiny-api:${{ github.event.release.tag_name }}#' kubernetes-tiny-api/deployment.yaml
-#          yq -i '(. | select(.kind == "Deployment") | .spec.template.spec.containers[0].image) = "stubin87/tiny-api:${{ github.event.release.tag_name }}"' kubernetes-tiny-api/deployment.yaml
-#
-#          echo "updating tiny-api-chart/values.yaml to use: stubin87/tiny-api:${{ github.event.release.tag_name }}"
-#          yq -i '.image.tag = "${{ github.event.release.tag_name }}"' tiny-api-chart/values.yaml
-#
-#          changed_files_count=$(git --no-pager diff --name-only | wc -l)
-#          if [ "$changed_files_count" -eq 0 ]; then
-#            echo "no changes detected, exit";
-#            exit 1
-#          fi
-#
-#          echo "committing the change ..."
-#          git diff | grep '^[+-][^+-]'
-#          git add --all
-#          git commit -m "k8s configs updated for version ${{ github.event.release.tag_name }}"
-#
-#          # push to master
-#          echo "pushing the changes ..."
-#          git push
-#
-#          echo "done <3"
+  k8s-config-update:
+    runs-on: ubuntu-latest
+    needs: docker-build-and-push
+    steps:
+      - name: get yq
+        uses: mikefarah/yq@master
+
+      - name: k8s configs update
+        env:
+          PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        run: |
+          git clone https://2beens:$PERSONAL_ACCESS_TOKEN@github.com/2beens/tiny-api-k8s
+
+          cd tiny-api-k8s
+          git config user.name "Serj Tubin (github actions bot)"
+          git config user.email "stubin87@gmail.com"
+
+          # make the change
+          echo "updating kubernetes-tiny-api/tiny-service-deployment.yaml to use: stubin87/tiny-service:${{ github.event.release.tag_name }}"
+          yq -i '(. | select(.kind == "Deployment") | .spec.template.spec.containers[0].image) = "stubin87/tiny-service:${{ github.event.release.tag_name }}"' kubernetes-tiny-api/tiny-service-deployment.yaml
+
+          changed_files_count=$(git --no-pager diff --name-only | wc -l)
+          if [ "$changed_files_count" -eq 0 ]; then
+            echo "no changes detected, exit";
+            exit 1
+          fi
+
+          echo "committing the change ..."
+          git diff | grep '^[+-][^+-]'
+          git add --all
+          git commit -m "k8s configs updated for version ${{ github.event.release.tag_name }}"
+
+          # push to master
+          echo "pushing the changes ..."
+          git push
+
+          echo "done <3"
