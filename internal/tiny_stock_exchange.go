@@ -136,7 +136,10 @@ func (s *TinyStockExchange) NewValueDelta(ctx context.Context, delta *tseProto.S
 	}, nil
 }
 
-func (s *TinyStockExchange) ListStockValueDeltas(listStockValueDeltasRequest *tseProto.ListStockValueDeltasRequest, listStockValueDeltasServer tseProto.TinyStockExchange_ListStockValueDeltasServer) error {
+func (s *TinyStockExchange) ListStockValueDeltas(
+	_ *tseProto.ListStockValueDeltasRequest,
+	listStockValueDeltasServer tseProto.TinyStockExchange_ListStockValueDeltasServer,
+) error {
 	filter := bson.D{}
 	cursor, err := s.collValueDeltas.Find(listStockValueDeltasServer.Context(), filter)
 	if err != nil {
