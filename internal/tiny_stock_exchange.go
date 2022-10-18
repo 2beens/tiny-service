@@ -89,10 +89,17 @@ func (s *TinyStockExchange) RemoveStock(ctx context.Context, stock *tseProto.Sto
 
 	result, err := s.collStocks.DeleteOne(ctx, filter, opts)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to delete stock %s: %w", stock.Ticker, err)
 	}
+	deletedStocksCount := result.DeletedCount
 
-	msg := fmt.Sprintf("deleted documents (stock: %s): %v", stock.Ticker, result.DeletedCount)
+	result, err = s.collValueDeltas.DeleteMany(ctx, filter, opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to delete related delta values for stock %s: %w", stock.Ticker, err)
+	}
+	deletedValueDeltas := result.DeletedCount
+
+	msg := fmt.Sprintf("deleted documents (stock: %s) %d, value deltas %d", stock.Ticker, deletedStocksCount, deletedValueDeltas)
 	fmt.Println(msg)
 
 	return &tseProto.Result{
