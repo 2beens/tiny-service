@@ -94,8 +94,26 @@ func (s *TinyStockExchange) UpdateStock(ctx context.Context, stock *tseProto.Sto
 }
 
 func (s *TinyStockExchange) ListStocks(listStocksRequest *tseProto.ListStocksRequest, listStocksServer tseProto.TinyStockExchange_ListStocksServer) error {
-	//TODO implement me
-	panic("implement me")
+	filter := bson.D{}
+	cursor, err := s.collStocks.Find(listStocksServer.Context(), filter)
+	if err != nil {
+		return err
+	}
+
+	var results []bson.D
+	if err := cursor.All(listStocksServer.Context(), &results); err != nil {
+		return err
+	}
+
+	for _, result := range results {
+		resMap := result.Map()
+		listStocksServer.Send(&tseProto.Stock{
+			Ticker: fmt.Sprintf("%s", resMap["ticker"]),
+			Name:   fmt.Sprintf("%s", resMap["name"]),
+		})
+	}
+
+	return nil
 }
 
 func (s *TinyStockExchange) NewValueDelta(ctx context.Context, delta *tseProto.StockValueDelta) (*tseProto.Result, error) {
