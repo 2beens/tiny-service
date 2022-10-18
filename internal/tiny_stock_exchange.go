@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"time"
 
+	"github.com/2beens/tiny-service/pkg"
 	tseProto "github.com/2beens/tiny-stock-exchange-proto"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -29,7 +29,7 @@ func NewTinyStockExchange(
 	collStocks := tseDB.Collection("stocks")
 	collValueDeltas := tseDB.Collection("deltas")
 
-	if err := CreateIndex(collStocks, "ticker", true); err != nil {
+	if err := pkg.CreateIndex(collStocks, "ticker", true); err != nil {
 		return nil, fmt.Errorf("create index for stock.ticker: %w", err)
 	}
 
@@ -38,26 +38,6 @@ func NewTinyStockExchange(
 		collStocks:      collStocks,
 		collValueDeltas: collValueDeltas,
 	}, nil
-}
-
-// CreateIndex - creates an index for a specific field in a collection
-// Creating indexes in MongoDB is an idempotent operation, so no need to check if it exists:
-// https://stackoverflow.com/a/35020346/1794478
-func CreateIndex(collection *mongo.Collection, field string, unique bool) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if createdIndex, err := collection.Indexes().CreateOne(ctx, mongo.IndexModel{
-		// index in ascending order or -1 for descending order
-		Keys:    bson.M{field: 1},
-		Options: options.Index().SetUnique(unique),
-	}); err != nil {
-		return err
-	} else {
-		log.Printf("created index %s for field %s", createdIndex, field)
-	}
-
-	return nil
 }
 
 func (s *TinyStockExchange) NewStock(ctx context.Context, stock *tseProto.Stock) (*tseProto.Result, error) {
@@ -139,11 +119,6 @@ func (s *TinyStockExchange) NewValueDelta(ctx context.Context, delta *tseProto.S
 }
 
 func (s *TinyStockExchange) ListStockValueDeltas(listStockValueDeltasRequest *tseProto.ListStockValueDeltasRequest, listStockValueDeltasServer tseProto.TinyStockExchange_ListStockValueDeltasServer) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (s *TinyStockExchange) mustEmbedUnimplementedTinyStockExchangeServer() {
 	//TODO implement me
 	panic("implement me")
 }
