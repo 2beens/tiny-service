@@ -51,7 +51,7 @@ func main() {
 	log.Debugf("instance %s: tiny service starting ...", *instanceName)
 
 	chOsInterrupt := make(chan os.Signal, 1)
-	signal.Notify(chOsInterrupt, os.Interrupt, syscall.SIGTERM, syscall.SIGKILL)
+	signal.Notify(chOsInterrupt, os.Interrupt, syscall.SIGTERM)
 
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -68,9 +68,9 @@ func main() {
 	}
 
 	log.Printf("ping mongodb client [%s] ...", mdbConnStr)
-	timeoutCtx, timeoutCancel := context.WithTimeout(context.Background(), time.Second*5)
+	timeoutCtx, timeoutCancel := context.WithTimeout(ctx, time.Second*5)
 	defer timeoutCancel()
-	if err := mongoClient.Ping(ctx, readpref.Primary()); err != nil {
+	if err := mongoClient.Ping(timeoutCtx, readpref.Primary()); err != nil {
 		log.Fatalf("failed to ping mongodb: %s", err)
 	}
 	log.Println("mongodb client ping ok")
@@ -89,8 +89,10 @@ func main() {
 			log.Fatalf("failed to listen: %v", err)
 		}
 
-		log.Printf("listening on tcp %s:%s", *host, *port)
-		grpcServer.Serve(tcpListener)
+		log.Debugf("listening on tcp %s:%s", *host, *port)
+		if err := grpcServer.Serve(tcpListener); err != nil {
+			log.Error("grpc server serve: %s", err)
+		}
 	}()
 
 	receivedSig := <-chOsInterrupt
