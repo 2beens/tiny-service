@@ -21,12 +21,15 @@ var (
 type TinyStockExchange struct {
 	tseProto.UnimplementedTinyStockExchangeServer
 
+	instanceName string
+
 	mongoClient     *mongo.Client
 	collStocks      *mongo.Collection
 	collValueDeltas *mongo.Collection
 }
 
 func NewTinyStockExchange(
+	instanceName string,
 	dbName string,
 	mongoClient *mongo.Client,
 ) (*TinyStockExchange, error) {
@@ -42,6 +45,7 @@ func NewTinyStockExchange(
 	}
 
 	return &TinyStockExchange{
+		instanceName:    instanceName,
 		mongoClient:     mongoClient,
 		collStocks:      collStocks,
 		collValueDeltas: collValueDeltas,
@@ -75,7 +79,7 @@ func (s *TinyStockExchange) NewStock(ctx context.Context, stock *tseProto.Stock)
 		return nil, err
 	}
 
-	msg := fmt.Sprintf("inserted document (stock) with _id: %v", result.InsertedID)
+	msg := fmt.Sprintf("[%s]: inserted document (stock) with _id: %v", s.instanceName, result.InsertedID)
 	log.Println(msg)
 
 	return &tseProto.Result{
@@ -107,7 +111,7 @@ func (s *TinyStockExchange) RemoveStock(ctx context.Context, stock *tseProto.Sto
 	}
 	deletedValueDeltas := result.DeletedCount
 
-	msg := fmt.Sprintf("deleted documents (stock: %s) %d, value deltas %d", stock.Ticker, deletedStocksCount, deletedValueDeltas)
+	msg := fmt.Sprintf("[%s]: deleted documents (stock: %s) %d, value deltas %d", s.instanceName, stock.Ticker, deletedStocksCount, deletedValueDeltas)
 	log.Println(msg)
 
 	return &tseProto.Result{
@@ -133,7 +137,7 @@ func (s *TinyStockExchange) UpdateStock(ctx context.Context, stock *tseProto.Sto
 		return nil, fmt.Errorf("failed to update stock %s: %w", stock.Ticker, err)
 	}
 
-	msg := fmt.Sprintf("documents updated: %d", result.ModifiedCount)
+	msg := fmt.Sprintf("[%s]: documents updated: %d", s.instanceName, result.ModifiedCount)
 	log.Println(msg)
 
 	return &tseProto.Result{
@@ -176,7 +180,7 @@ func (s *TinyStockExchange) NewValueDelta(ctx context.Context, delta *tseProto.S
 		return nil, err
 	}
 
-	msg := fmt.Sprintf("inserted document (value delta) with _id: %v", result.InsertedID)
+	msg := fmt.Sprintf("[%s]: inserted document (value delta) with _id: %v", s.instanceName, result.InsertedID)
 	log.Println(msg)
 
 	return &tseProto.Result{
