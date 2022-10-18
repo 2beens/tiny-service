@@ -32,6 +32,9 @@ func NewTinyStockExchange(
 	if err := pkg.CreateIndex(collStocks, "ticker", true); err != nil {
 		return nil, fmt.Errorf("create index for stock.ticker: %w", err)
 	}
+	if err := pkg.CreateIndex(collValueDeltas, "ticker", false); err != nil {
+		return nil, fmt.Errorf("create index for deltas.ticker: %w", err)
+	}
 
 	return &TinyStockExchange{
 		mongoClient:     mongoClient,
