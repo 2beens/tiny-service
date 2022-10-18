@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/2beens/tiny-service/pkg"
@@ -11,6 +12,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+)
+
+var (
+	ErrStockNotExists = errors.New("stock does not exist")
 )
 
 type TinyStockExchange struct {
@@ -43,6 +48,22 @@ func NewTinyStockExchange(
 	}, nil
 }
 
+func (s *TinyStockExchange) StockExists(ctx context.Context, ticker string) error {
+	filter := bson.D{
+		{"ticker", bson.D{{"$eq", ticker}}},
+	}
+	count, err := s.collStocks.CountDocuments(ctx, filter)
+	if err != nil {
+		return err
+	}
+
+	if count == 0 {
+		return ErrStockNotExists
+	}
+
+	return nil
+}
+
 func (s *TinyStockExchange) NewStock(ctx context.Context, stock *tseProto.Stock) (*tseProto.Result, error) {
 	log.Printf("> will try to insert stock: %v", stock)
 	result, err := s.collStocks.InsertOne(ctx, bson.D{
@@ -55,7 +76,7 @@ func (s *TinyStockExchange) NewStock(ctx context.Context, stock *tseProto.Stock)
 	}
 
 	msg := fmt.Sprintf("inserted document (stock) with _id: %v", result.InsertedID)
-	fmt.Println(msg)
+	log.Println(msg)
 
 	return &tseProto.Result{
 		Success: true,
@@ -64,6 +85,10 @@ func (s *TinyStockExchange) NewStock(ctx context.Context, stock *tseProto.Stock)
 }
 
 func (s *TinyStockExchange) RemoveStock(ctx context.Context, stock *tseProto.Stock) (*tseProto.Result, error) {
+	if err := s.StockExists(ctx, stock.Ticker); err != nil {
+		return nil, fmt.Errorf("failed to delete stock %s: %w", stock.Ticker, err)
+	}
+
 	log.Printf("> will try to remove stock: %v", stock)
 	filter := bson.D{
 		{"ticker", bson.D{{"$eq", stock.Ticker}}},
@@ -83,7 +108,7 @@ func (s *TinyStockExchange) RemoveStock(ctx context.Context, stock *tseProto.Sto
 	deletedValueDeltas := result.DeletedCount
 
 	msg := fmt.Sprintf("deleted documents (stock: %s) %d, value deltas %d", stock.Ticker, deletedStocksCount, deletedValueDeltas)
-	fmt.Println(msg)
+	log.Println(msg)
 
 	return &tseProto.Result{
 		Success: true,
@@ -92,8 +117,29 @@ func (s *TinyStockExchange) RemoveStock(ctx context.Context, stock *tseProto.Sto
 }
 
 func (s *TinyStockExchange) UpdateStock(ctx context.Context, stock *tseProto.Stock) (*tseProto.Result, error) {
-	//TODO implement me
-	panic("implement me")
+	if err := s.StockExists(ctx, stock.Ticker); err != nil {
+		return nil, fmt.Errorf("failed to update stock %s: %w", stock.Ticker, err)
+	}
+
+	filter := bson.D{
+		{"ticker", bson.D{{"$eq", stock.Ticker}}},
+	}
+	update := bson.D{{"$set", bson.D{{"name", stock.Name}}}}
+	opts := options.Update().SetUpsert(true)
+	opts.Hint = bson.D{{"ticker", 1}}
+
+	result, err := s.collStocks.UpdateOne(ctx, filter, update, opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update stock %s: %w", stock.Ticker, err)
+	}
+
+	msg := fmt.Sprintf("documents updated: %d", result.ModifiedCount)
+	log.Println(msg)
+
+	return &tseProto.Result{
+		Success: true,
+		Message: msg,
+	}, nil
 }
 
 func (s *TinyStockExchange) ListStocks(listStocksRequest *tseProto.ListStocksRequest, listStocksServer tseProto.TinyStockExchange_ListStocksServer) error {
@@ -131,7 +177,7 @@ func (s *TinyStockExchange) NewValueDelta(ctx context.Context, delta *tseProto.S
 	}
 
 	msg := fmt.Sprintf("inserted document (value delta) with _id: %v", result.InsertedID)
-	fmt.Println(msg)
+	log.Println(msg)
 
 	return &tseProto.Result{
 		Success: true,
