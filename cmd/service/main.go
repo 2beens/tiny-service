@@ -32,6 +32,7 @@ func main() {
 	port := flag.String("port", "9002", "tiny stock exchange server port")
 	instanceName := flag.String("name", "anon-instance", "name of this tiny api instance")
 	mdbHost := flag.String("mdbhost", "localhost", "mongo db host")
+	mdbPort := flag.String("mdbport", "27017", "mongo db port")
 	tseDBName := flag.String("tsedb", "tiny-stock-exchange", "mongo db tiny stock exchange db name")
 	flag.Parse()
 
@@ -42,6 +43,14 @@ func main() {
 	if envVarPort := os.Getenv("TINY_SERVICE_PORT"); envVarPort != "" {
 		*port = envVarPort
 		log.Debugf("port [%s] present in env. var, will use it instead", envVarPort)
+	}
+	if envVarMdbHost := os.Getenv("TINY_SERVICE_MONGO_HOST"); envVarMdbHost != "" {
+		*mdbHost = envVarMdbHost
+		log.Debugf("mongodb host [%s] present in env. var, will use it instead", envVarMdbHost)
+	}
+	if envVarMdbPort := os.Getenv("TINY_SERVICE_MONGO_PORT"); envVarMdbPort != "" {
+		*mdbPort = envVarMdbPort
+		log.Debugf("port [%s] present in env. var, will use it instead", envVarMdbPort)
 	}
 	if envVarInstanceName := os.Getenv("TINY_SERVICE_INSTANCE_NAME"); envVarInstanceName != "" {
 		*instanceName = envVarInstanceName
@@ -57,7 +66,7 @@ func main() {
 
 	// connect to mongo db
 	log.Println("creating mongodb client ...")
-	mdbConnStr := fmt.Sprintf("mongodb://root:root@%s:27017/?maxPoolSize=20&w=majority", *mdbHost)
+	mdbConnStr := fmt.Sprintf("mongodb://root:root@%s:%s/?maxPoolSize=20&w=majority", *mdbHost, *mdbPort)
 	opts := options.Client()
 	opts.SetConnectTimeout(5 * time.Second)
 	opts.ApplyURI(mdbConnStr)
@@ -91,7 +100,7 @@ func main() {
 
 		log.Debugf("listening on tcp %s:%s", *host, *port)
 		if err := grpcServer.Serve(tcpListener); err != nil {
-			log.Error("grpc server serve: %s", err)
+			log.Errorf("grpc server serve: %s", err)
 		}
 	}()
 
