@@ -41,8 +41,8 @@ jobs:
           git config user.email "stubin87@gmail.com"
 
           # make the change
-          echo "updating kubernetes-tiny-api/tiny-service-deployment.yaml to use: stubin87/tiny-service:${{ github.event.release.tag_name }}"
-          yq -i '(. | select(.kind == "Deployment") | .spec.template.spec.containers[0].image) = "stubin87/tiny-service:${{ github.event.release.tag_name }}"' kubernetes-tiny-api/tiny-service-deployment.yaml
+          echo "updating tiny-service deployment.yaml to use: stubin87/tiny-service:${{ github.event.release.tag_name }}"
+          yq -i '(. | select(.kind == "Deployment") | .spec.template.spec.containers[0].image) = "stubin87/tiny-service:${{ github.event.release.tag_name }}"' kubernetes-tiny-service/deployment.yaml
 
           changed_files_count=$(git --no-pager diff --name-only | wc -l)
           if [ "$changed_files_count" -eq 0 ]; then
@@ -53,7 +53,7 @@ jobs:
           echo "committing the change ..."
           git diff | grep '^[+-][^+-]'
           git add --all
-          git commit -m "k8s configs updated for version ${{ github.event.release.tag_name }}"
+          git commit -m "tiny service k8s manifests updated for version ${{ github.event.release.tag_name }}"
 
           # push to master
           echo "pushing the changes ..."
