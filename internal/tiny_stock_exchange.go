@@ -146,7 +146,7 @@ func (s *TinyStockExchange) UpdateStock(ctx context.Context, stock *tseProto.Sto
 	}, nil
 }
 
-func (s *TinyStockExchange) ListStocks(listStocksRequest *tseProto.ListStocksRequest, listStocksServer tseProto.TinyStockExchange_ListStocksServer) error {
+func (s *TinyStockExchange) ListStocks(_ *tseProto.ListStocksRequest, listStocksServer tseProto.TinyStockExchange_ListStocksServer) error {
 	filter := bson.D{}
 	cursor, err := s.collStocks.Find(listStocksServer.Context(), filter)
 	if err != nil {
@@ -160,10 +160,12 @@ func (s *TinyStockExchange) ListStocks(listStocksRequest *tseProto.ListStocksReq
 
 	for _, result := range results {
 		resMap := result.Map()
-		listStocksServer.Send(&tseProto.Stock{
+		if err := listStocksServer.Send(&tseProto.Stock{
 			Ticker: fmt.Sprintf("%s", resMap["ticker"]),
 			Name:   fmt.Sprintf("%s", resMap["name"]),
-		})
+		}); err != nil {
+			log.Warnf("list stocks, failed to send %s result: %s", resMap["ticker"], err)
+		}
 	}
 
 	return nil
@@ -190,10 +192,12 @@ func (s *TinyStockExchange) NewValueDelta(ctx context.Context, delta *tseProto.S
 }
 
 func (s *TinyStockExchange) ListStockValueDeltas(
-	_ *tseProto.ListStockValueDeltasRequest,
+	req *tseProto.ListStockValueDeltasRequest,
 	listStockValueDeltasServer tseProto.TinyStockExchange_ListStockValueDeltasServer,
 ) error {
-	filter := bson.D{}
+	filter := bson.D{
+		{"ticker", bson.D{{"$eq", req.Ticker}}},
+	}
 	cursor, err := s.collValueDeltas.Find(listStockValueDeltasServer.Context(), filter)
 	if err != nil {
 		return err
@@ -216,11 +220,13 @@ func (s *TinyStockExchange) ListStockValueDeltas(
 			log.Errorf("list stock deltas: delta [%v] not an int64!", resMap["delta"])
 			delta = 0 // or maybe skip
 		}
-		listStockValueDeltasServer.Send(&tseProto.StockValueDelta{
+		if err := listStockValueDeltasServer.Send(&tseProto.StockValueDelta{
 			Ticker:    fmt.Sprintf("%s", resMap["ticker"]),
 			Timestamp: ts,
 			Delta:     delta,
-		})
+		}); err != nil {
+			log.Warnf("list deltas, failed to send delta %s for %s: %s", resMap["delta"], req.Ticker, err)
+		}
 	}
 
 	return nil
